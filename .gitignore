@@ -2,3 +2,15 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
+venv/
+.env
+.env.*
+#Backend logs
+*.log
+#Frontend logs
+node_modules/
+Thumbs.db
+#Private key
+*.key
+*.pem
+
