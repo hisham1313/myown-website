@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management | NexGen</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/pages/products.css">
+    <style>
+        /* Ensuring Edit/Delete buttons are very visible */
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-edit {
+            background-color: #4f46e5;
+            color: white;
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-delete {
+            background-color: #ef4444;
+            color: white;
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-box {
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Simple check before anything renders -->
+    <script>
+        if (!localStorage.getItem('access_token')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <header id="main-header"></header>
+
+    <main class="container mt-4">
+        <div class="controls-header">
+            <div>
+                <h1>Product Inventory</h1>
+                <p style="color: var(--text-muted);">Manage your current stock and products.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <input type="text" id="search-input" class="search-box" placeholder="Search products...">
+                <button id="add-product-btn" class="btn btn-primary">+ Add New Product</button>
+            </div>
+        </div>
+
+        <div id="product-list" class="products-grid">
+            <!-- Products will be rendered here -->
+            <p>Loading your products...</p>
+        </div>
+    </main>
+
+    <!-- The Modal for Adding/Updating -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">New Product</h3>
+                <span id="close-modal" class="close-btn">&times;</span>
+            </div>
+            <form id="product-form" class="product-form" onsubmit="handleSaveProduct(event)">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="name" placeholder="E.g. Wireless Mouse" required>
+                </div>
+                <div class="form-group">
+                    <label>Price ($)</label>
+                    <input type="number" step="0.01" id="price" placeholder="29.99" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="Tech">Tech</option>
+                        <option value="Gaming">Gaming</option>
+                        <option value="Home">Home</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Product Image/Icon (Emoji)</label>
+                    <input type="text" id="image" placeholder="🖱️" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save
+                    Product</button>
+            </form>
+        </div>
+    </div>
+
+    <footer id="main-footer"></footer>
+
+    <script src="../js/main.js" type="module"></script>
+    <script type="module">
+        import { APIService } from '../js/api.js';
+
+        const productList = document.getElementById('product-list');
+        const productForm = document.getElementById('product-form');
+        const modal = document.getElementById('product-modal');
+        let products = [];
+
+        async function loadProducts() {
+            try {
+                products = await APIService.getProducts();
+                renderItems(products);
+            } catch (err) {
+                productList.innerHTML = "<p>Error connecting to backend.</p>";
+            }
+        }
+
+        function renderItems(items) {
+            if (items.length === 0) {
+                productList.innerHTML = "<p>No products found. Add one to see it here!</p>";
+                return;
+            }
+
+            productList.innerHTML = items.map(p => {
+                // Defensive check for price to prevent JS errors
+                const displayPrice = typeof p.price === 'number' ? p.price.toFixed(2) : p.price;
+
+                return `
+                <div class="product-card">
+                    <div class="product-img" style="font-size: 3rem; padding: 2rem; background: #f8fafc; text-align: center;">
+                        ${p.image || '📦'}
+                    </div>
+                    <div class="product-info" style="padding: 1.5rem;">
+                        <span class="product-cat" style="font-size: 0.7rem; text-transform: uppercase; color: #6366f1;">${p.category}</span>
+                        <h3 style="margin: 0.5rem 0;">${p.name}</h3>
+                        <div style="font-weight: 700; color: #1e293b; font-size: 1.25rem;">$${displayPrice}</div>
+                        
+                        <!-- These are the buttons you requested! -->
+                        <div class="card-actions">
+                            <button class="btn-edit edit-btn" data-id="${p.id}">Edit</button>
+                            <button class="btn-delete delete-btn" data-id="${p.id}">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+
+            // Add Click Events
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = () => openEdit(btn.dataset.id);
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = () => handleDelete(btn.dataset.id);
+            });
+        }
+
+        // Open Modal for Editing
+        function openEdit(id) {
+            const p = products.find(x => x.id == id);
+            if (!p) return;
+
+            document.getElementById('modal-title').innerText = "Update Product";
+            document.getElementById('product-id').value = p.id;
+            document.getElementById('name').value = p.name;
+            document.getElementById('price').value = p.price;
+            document.getElementById('category').value = p.category;
+            document.getElementById('image').value = p.image;
+
+            modal.classList.add('active');
+        }
+
+        // Delete Product
+        async function handleDelete(id) {
+            if (confirm("Permanently delete this product?")) {
+                await APIService.deleteProduct(id);
+                loadProducts();
+            }
+        }
+
+        // Form Submit (Add or Update)
+        productForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('product-id').value;
+            const data = {
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                category: document.getElementById('category').value,
+                image: document.getElementById('image').value
+            };
+
+            try {
+                if (id) {
+                    await APIService.updateProduct(id, data);
+                    alert("Product updated successfully!");
+                } else {
+                    await APIService.createProduct(data);
+                    alert("Product created successfully!");
+                }
+                modal.classList.remove('active');
+                loadProducts();
+            } catch (err) {
+                alert("Error saving product: " + err.message);
+            }
+        };
+
+        // Open Modal for New Product
+        document.getElementById('add-product-btn').onclick = () => {
+            document.getElementById('modal-title').innerText = "Create Product";
+            productForm.reset();
+            document.getElementById('product-id').value = "";
+            modal.classList.add('active');
+        };
+
+        document.getElementById('close-modal').onclick = () => modal.classList.remove('active');
+
+        // Initial Load
+        loadProducts();
+    </script>
+</body>
+
+</html>

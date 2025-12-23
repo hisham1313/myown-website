@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products | NexGen Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/pages/products.css">
+    <style>
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-top: var(--space-lg);
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .admin-table th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body style="background-color: #f1f5f9;">
+    <!-- Auth Guard -->
+    <script>
+        if (!localStorage.getItem('user')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <header id="main-header"></header>
+
+    <main class="container mt-4">
+        <header
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
+            <div>
+                <h1>Product Management</h1>
+                <p style="color: var(--text-muted);">Create, update, or delete products from the inventory.</p>
+            </div>
+            <button id="add-product-btn" class="btn btn-primary">+ Add New Product</button>
+        </header>
+
+        <section id="admin-content">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Icon</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body">
+                    <!-- Rows injected via JS -->
+                    <tr>
+                        <td colspan="6" style="text-align:center;">Loading products...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Modal for Add/Edit -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Product</h3>
+                <span id="close-modal" class="close-btn">&times;</span>
+            </div>
+            <form id="product-form" class="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="name" placeholder="Enter product name" required>
+                </div>
+                <div class="form-group">
+                    <label>Price ($)</label>
+                    <input type="number" step="0.01" id="price" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="Tech">Tech</option>
+                        <option value="Gaming">Gaming</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Home">Home</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Icon (Emoji)</label>
+                    <input type="text" id="image" placeholder="e.g. 🎧" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save
+                    Product</button>
+            </form>
+        </div>
+    </div>
+
+    <footer id="main-footer"></footer>
+
+    <script src="../js/main.js" type="module"></script>
+    <script type="module">
+        import { APIService } from '../js/api.js';
+
+        const modal = document.getElementById('product-modal');
+        const productForm = document.getElementById('product-form');
+        const tableBody = document.getElementById('product-table-body');
+        let allProducts = [];
+
+        async function init() {
+            loadProducts();
+            setupEvents();
+        }
+
+        async function loadProducts() {
+            allProducts = await APIService.getProducts();
+            renderTable();
+        }
+
+        function renderTable() {
+            if (allProducts.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No products found.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = allProducts.map(p => `
+                <tr>
+                    <td>#${p.id}</td>
+                    <td style="font-size: 1.5rem;">${p.image}</td>
+                    <td style="font-weight: 600;">${p.name}</td>
+                    <td><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">${p.category}</span></td>
+                    <td>$${p.price.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-edit btn-small edit-btn" data-id="${p.id}">Edit</button>
+                        <button class="btn btn-delete btn-small delete-btn" data-id="${p.id}">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = () => openEditModal(btn.dataset.id));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.onclick = () => handleDelete(btn.dataset.id));
+        }
+
+        function setupEvents() {
+            document.getElementById('add-product-btn').onclick = openAddModal;
+            document.getElementById('close-modal').onclick = () => modal.classList.remove('active');
+            productForm.onsubmit = handleFormSubmit;
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = "Add New Product";
+            productForm.reset();
+            document.getElementById('product-id').value = "";
+            modal.classList.add('active');
+        }
+
+        function openEditModal(id) {
+            const p = allProducts.find(x => x.id == id);
+            if (!p) return;
+            document.getElementById('modal-title').innerText = "Edit Product";
+            document.getElementById('product-id').value = p.id;
+            document.getElementById('name').value = p.name;
+            document.getElementById('price').value = p.price;
+            document.getElementById('category').value = p.category;
+            document.getElementById('image').value = p.image;
+            modal.classList.add('active');
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('product-id').value;
+            const data = {
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                category: document.getElementById('category').value,
+                image: document.getElementById('image').value
+            };
+
+            try {
+                if (id) await APIService.updateProduct(id, data);
+                else await APIService.createProduct(data);
+
+                modal.classList.remove('active');
+                loadProducts();
+            } catch (err) { alert("Action failed"); }
+        }
+
+        async function handleDelete(id) {
+            if (!confirm("Delete this product?")) return;
+            try {
+                await APIService.deleteProduct(id);
+                loadProducts();
+            } catch (err) { alert("Delete failed"); }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

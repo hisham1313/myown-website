@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | NexGen</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body style="background-color: #f1f5f9;">
+    <!-- Simple check before anything renders -->
+    <script>
+        if (!localStorage.getItem('user')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <header id="main-header"></header>
+
+    <main class="container mt-4">
+        <div
+            style="background: white; padding: var(--space-lg); border-radius: var(--radius); box-shadow: var(--shadow-md);">
+            <header
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
+                <div>
+                    <h1>User Dashboard</h1>
+                    <p id="user-welcome">Welcome back, loading...</p>
+                </div>
+                <div id="stats-summary" style="display: flex; gap: var(--space-lg);">
+                    <div class="text-center">
+                        <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">12</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Orders</div>
+                    </div>
+                    <div class="text-center">
+                        <div style="font-size: 1.5rem; font-weight: 800; color: var(--success);">$1,240</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Spent</div>
+                    </div>
+                </div>
+            </header>
+
+            <section style="margin-top: var(--space-xl);">
+                <h3>Recent Activity</h3>
+                <div style="margin-top: var(--space-md); border-top: 1px solid rgba(0,0,0,0.05);">
+                    <div
+                        style="padding: 1rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
+                        <span>Order #19284 - Wireless Headset</span>
+                        <span style="color: var(--success); font-weight: 600;">Delivered</span>
+                    </div>
+                    <div
+                        style="padding: 1rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
+                        <span>Order #19275 - Ergo Chair</span>
+                        <span style="color: var(--accent); font-weight: 600;">Processing</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script src="../js/main.js" type="module"></script>
+    <script type="module">
+        import { APIService } from '../js/api.js';
+
+        async function loadProfile() {
+            try {
+                const profile = await APIService.getUserProfile();
+                document.getElementById('user-welcome').innerText = `Welcome back, ${profile.name}! You've been a member since ${profile.joinedDate}.`;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        loadProfile();
+    </script>
+</body>
+
+</html>

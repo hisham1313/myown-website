@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | NexGen</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <header id="main-header"></header>
+
+    <main class="container mt-4">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-xl); margin-top: var(--space-xl);">
+            <div>
+                <h1>Get in Touch</h1>
+                <p style="color: var(--text-muted); margin-bottom: var(--space-lg);">Have questions or need a custom
+                    solution? Our team is here to help you scaling your business.</p>
+
+                <div style="margin-bottom: var(--space-md);">
+                    <h4 style="margin-bottom: 0.25rem;">Support Email</h4>
+                    <p style="color: var(--primary); font-weight: 600;">hello@nexgen.com</p>
+                </div>
+
+                <div style="margin-bottom: var(--space-md);">
+                    <h4 style="margin-bottom: 0.25rem;">Visit Our Office</h4>
+                    <p>123 Innovation Drive, Tech City, NY 10001</p>
+                </div>
+            </div>
+
+            <div
+                style="background: white; padding: var(--space-lg); border-radius: var(--radius); box-shadow: var(--shadow-lg);">
+                <form id="contact-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Name</label>
+                        <input type="text" class="btn-outline"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; color: var(--text-main); text-align: left;"
+                            placeholder="Your Name" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
+                        <input type="email" class="btn-outline"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; color: var(--text-main); text-align: left;"
+                            placeholder="your@email.com" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Message</label>
+                        <textarea rows="5" class="btn-outline"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; color: var(--text-main); resize: none;"
+                            placeholder="How can we help?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                    <div id="contact-success"
+                        style="display:none; color: var(--success); text-align: center; margin-top: 1rem; font-weight: 600;">
+                        Message sent successfully!
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script src="../js/main.js" type="module"></script>
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const btn = this.querySelector('button');
+            const success = document.getElementById('contact-success');
+
+            btn.innerText = 'Sending...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.style.display = 'none';
+                success.style.display = 'block';
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>
