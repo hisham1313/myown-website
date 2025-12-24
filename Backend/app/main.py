@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from database import engine,SessionLocal,Base
 from model import ProductDB
 from security import hash_password,verify_password
-from model import UserDB
+from model import UserDB, MessageDB
 from security import create_access_token
 from security import get_current_user
 # from database import get_db
@@ -14,7 +14,12 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://127.0.0.1:5555",
+        "http://localhost:5555"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -41,6 +46,11 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email:str
     password:str
+
+class ContactMessage(BaseModel):
+    name: str
+    email: str
+    message: str
 
 @app.post("/api/products")
 def create_product(product:Product,db:Session=Depends(get_db),user_id:int=Depends(get_current_user)):
@@ -111,5 +121,29 @@ def login_user(
 
     return {
         "access_token": access_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": {
+            "id": db_user.id,
+            "username": db_user.username,
+            "email": db_user.email
+        }
     }
+
+@app.get("/api/users/me")
+def read_users_me(db: Session = Depends(get_db), user_id: int = Depends(get_current_user)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": user.id,
+        "name": user.username,  # Frontend expects 'name'
+        "email": user.email,
+        "joinedDate": user.created_at.strftime("%B %Y") if user.created_at else "December 2025"
+    }
+
+@app.post("/api/contact")
+def create_contact(msg: ContactMessage, db: Session = Depends(get_db)):
+    new_msg = MessageDB(**msg.dict())
+    db.add(new_msg)
+    db.commit()
+    return {"success": True, "message": "Message sent successfully"}

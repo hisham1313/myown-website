@@ -69,6 +69,7 @@
                 document.getElementById('user-welcome').innerText = `Welcome back, ${profile.name}! You've been a member since ${profile.joinedDate}.`;
             } catch (err) {
                 console.error(err);
+                document.getElementById('user-welcome').innerHTML = `<span style="color: var(--error)">Error loading profile: ${err.message}</span>`;
             }
         }
         loadProfile();

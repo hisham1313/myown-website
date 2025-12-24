@@ -65,18 +65,35 @@
 
     <script src="../js/main.js" type="module"></script>
     <script>
-        document.getElementById('contact-form').addEventListener('submit', function (e) {
-            e.preventDefault();
+        <script type="module">
+            import {APIService} from '../js/api.js';
+
+            document.getElementById('contact-form').addEventListener('submit', async function (e) {
+                e.preventDefault();
             const btn = this.querySelector('button');
             const success = document.getElementById('contact-success');
 
+            // Gather data
+            const payload = {
+                name: this.querySelector('input[placeholder="Your Name"]').value,
+            email: this.querySelector('input[placeholder="your@email.com"]').value,
+            message: this.querySelector('textarea').value
+            };
+
+            const originalText = btn.innerText;
             btn.innerText = 'Sending...';
             btn.disabled = true;
 
-            setTimeout(() => {
-                btn.style.display = 'none';
-                success.style.display = 'block';
-            }, 1000);
+            try {
+                await APIService.sendInfo(payload);
+            btn.style.display = 'none';
+            success.style.display = 'block';
+            this.reset();
+            } catch (err) {
+                alert("Failed to send: " + err.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
+            }
         });
     </script>
 </body>

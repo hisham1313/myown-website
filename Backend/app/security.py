@@ -16,7 +16,9 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 # ================= JWT SETTINGS =================
 
-SECRET_KEY = "CHANGE_THIS_SECRET_KEY"
+import os
+
+SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE_THIS_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

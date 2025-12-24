@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5555/api";
+const API_BASE_URL = "http://127.0.0.1:5555/api";
 
 export const APIService = {
 
@@ -6,12 +6,18 @@ export const APIService = {
     // READ
     async getProducts() {
         const response = await fetch(`${API_BASE_URL}/products`);
-        return await response.json();
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.detail || "Failed to fetch products");
+        }
+        return data;
     },
 
     // CREATE
     async createProduct(productData) {
         const token = localStorage.getItem('access_token');
+        if (!token) throw new Error("Authentication required. Please login again.");
+
         const response = await fetch(`${API_BASE_URL}/products`, {
             method: "POST",
             headers: {
@@ -23,6 +29,7 @@ export const APIService = {
 
         const data = await response.json();
         if (!response.ok) {
+            if (response.status === 401) throw new Error("Session expired. Please login again.");
             throw new Error(data.detail || "Failed to create product");
         }
         return data;
@@ -31,6 +38,8 @@ export const APIService = {
     // UPDATE
     async updateProduct(id, productData) {
         const token = localStorage.getItem('access_token');
+        if (!token) throw new Error("Authentication required.");
+
         const response = await fetch(`${API_BASE_URL}/products/${id}`, {
             method: "PUT",
             headers: {
@@ -42,6 +51,7 @@ export const APIService = {
 
         const data = await response.json();
         if (!response.ok) {
+            if (response.status === 401) throw new Error("Session expired.");
             throw new Error(data.detail || "Failed to update product");
         }
         return data;
@@ -50,6 +60,8 @@ export const APIService = {
     // DELETE
     async deleteProduct(id) {
         const token = localStorage.getItem('access_token');
+        if (!token) throw new Error("Authentication required.");
+
         const response = await fetch(`${API_BASE_URL}/products/${id}`, {
             method: "DELETE",
             headers: {
@@ -59,6 +71,7 @@ export const APIService = {
 
         const data = await response.json();
         if (!response.ok) {
+            if (response.status === 401) throw new Error("Session expired.");
             throw new Error(data.detail || "Failed to delete product");
         }
         return data;
@@ -122,6 +135,16 @@ export const APIService = {
             throw new Error("Failed to fetch profile");
         }
 
+        return await response.json();
+    },
+
+    async sendInfo(data) {
+        const response = await fetch(`${API_BASE_URL}/contact`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error("Failed to send message");
         return await response.json();
     }
 }

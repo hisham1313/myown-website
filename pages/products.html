@@ -106,6 +106,7 @@
                     <select id="category">
                         <option value="Tech">Tech</option>
                         <option value="Gaming">Gaming</option>
+                        <option value="Furniture">Furniture</option>
                         <option value="Home">Home</option>
                     </select>
                 </div>
@@ -135,7 +136,11 @@
                 products = await APIService.getProducts();
                 renderItems(products);
             } catch (err) {
-                productList.innerHTML = "<p>Error connecting to backend.</p>";
+                productList.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--error);">
+                    <h3>Oops! Could not load products.</h3>
+                    <p>${err.message}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Ensure the backend is running.</p>
+                </div>`;
             }
         }
 

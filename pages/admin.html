@@ -134,8 +134,12 @@
         }
 
         async function loadProducts() {
-            allProducts = await APIService.getProducts();
-            renderTable();
+            try {
+                allProducts = await APIService.getProducts();
+                renderTable();
+            } catch (err) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Error: ${err.message}</td></tr>`;
+            }
         }
 
         function renderTable() {

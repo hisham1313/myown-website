@@ -44,11 +44,12 @@ async function handleLoginSubmit(e) {
 
         const response = await APIService.loginUser({ email, password });
 
-        // FastAPI OAuth2 returns { access_token: "...", token_type: "bearer" }
+        // FastAPI OAuth2 returns { access_token: "...", token_type: "bearer", user: {...} }
         if (response.access_token) {
-            // Store token and a dummy user object for UI
+            // Store token and user object
             localStorage.setItem('access_token', response.access_token);
-            localStorage.setItem('user', JSON.stringify({ username: email, email: email }));
+            const userObj = response.user || { username: email, email: email };
+            localStorage.setItem('user', JSON.stringify(userObj));
 
             alert("Login successful!");
             window.location.href = 'dashboard.html';
